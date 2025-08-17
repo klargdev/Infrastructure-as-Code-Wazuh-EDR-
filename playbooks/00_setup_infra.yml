@@ -8,6 +8,34 @@
     - group_vars/all.yml
   vars:
     ansible_python_interpreter: /usr/bin/python3
+    # Wazuh Indexer configuration
+    wazuh_indexer_cluster_name: "wazuh-cluster"
+    wazuh_indexer_node_name: "wazuh-indexer-1"
+    wazuh_indexer_network_host: "0.0.0.0"
+    wazuh_indexer_http_port: 9200
+    wazuh_indexer_transport_port: 9300
+    wazuh_indexer_heap_size: "1g"
+    # SSL configuration
+    wazuh_ssl_cert: "/etc/wazuh-certificates/wazuh-1.pem"
+    wazuh_ssl_key: "/etc/wazuh-certificates/wazuh-1-key.pem"
+    wazuh_ssl_ca: "/etc/wazuh-certificates/ca.crt"
+    # Wazuh Dashboard configuration
+    wazuh_dashboard_server_host: "0.0.0.0"
+    wazuh_dashboard_server_port: 5601
+    wazuh_dashboard_opensearch_hosts: ["https://127.0.0.1:9200"]
+    wazuh_dashboard_opensearch_ssl_verify: false
+    # Wazuh Manager configuration
+    wazuh_manager_cluster_name: "wazuh-cluster"
+    wazuh_manager_node_name: "wazuh-1"
+    wazuh_manager_email_alert: false
+    wazuh_manager_syscheck_frequency: 43200
+    wazuh_manager_rootcheck_frequency: 43200
+    # Authentication
+    wazuh_admin_user: "admin"
+    wazuh_admin_password: "admin"
+    wazuh_indexer_user: "admin"
+    wazuh_indexer_password: "admin"
+  
   roles:
     - common
     - wazuh_indexer
