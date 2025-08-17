@@ -20,6 +20,16 @@
     update_cache: yes
   tags: [install, server]
 
+- name: Check if wazuh-manager is installed
+  stat:
+    path: /var/ossec/bin/wazuh-control
+  register: wazuh_bin_stat
+
+- name: Fail if wazuh-manager is not installed
+  fail:
+    msg: "Wazuh manager is not installed. Installation failed or package missing."
+  when: not wazuh_bin_stat.stat.exists
+
 - name: Ensure /var/ossec/etc exists
   file:
     path: /var/ossec/etc
