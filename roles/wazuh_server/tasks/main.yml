@@ -30,9 +30,35 @@
   notify: restart wazuh services
   tags: [config, server]
 
+- name: Validate ossec.conf is not empty
+  stat:
+    path: /var/ossec/etc/ossec.conf
+  register: ossec_conf_stat
+
+- name: Fail if ossec.conf is empty
+  fail:
+    msg: "ossec.conf is empty! Check your template and variables."
+  when: ossec_conf_stat.stat.size == 0
+
 - name: Ensure wazuh-manager is running
   service:
     name: wazuh-manager
     state: started
     enabled: yes
+  register: wazuh_service
   tags: [service, server]
+  ignore_errors: yes
+
+- name: Print wazuh-manager status and logs if failed
+  shell: |
+    systemctl status wazuh-manager.service
+    journalctl -xeu wazuh-manager.service | tail -n 20
+  when: wazuh_service is failed
+  register: wazuh_debug
+  changed_when: false
+  failed_when: false
+
+- name: Show wazuh-manager troubleshooting output
+  debug:
+    var: wazuh_debug.stdout_lines
+  when: wazuh_service is failed
