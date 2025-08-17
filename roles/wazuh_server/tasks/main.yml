@@ -20,6 +20,12 @@
     update_cache: yes
   tags: [install, server]
 
+- name: Ensure xmllint is installed for XML validation
+  apt:
+    name: libxml2-utils
+    state: present
+  tags: [config, server]
+
 - name: Deploy ossec.conf from template
   template:
     src: ossec.conf.j2
@@ -39,6 +45,13 @@
   fail:
     msg: "ossec.conf is empty! Check your template and variables."
   when: ossec_conf_stat.stat.size == 0
+
+- name: Validate ossec.conf XML syntax
+  command: xmllint --noout /var/ossec/etc/ossec.conf
+  register: ossec_conf_xml
+  changed_when: false
+  failed_when: ossec_conf_xml.rc != 0
+  tags: [config, server]
 
 - name: Ensure wazuh-manager is running
   service:
