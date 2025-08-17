@@ -1,0 +1,34 @@
+---
+- name: Test Variables Loading
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+    - name: Display key variables
+      debug:
+        msg: |
+          wazuh_ssl_enabled: {{ wazuh_ssl_enabled | default('UNDEFINED') }}
+          wazuh_indexer_cluster_name: {{ wazuh_indexer_cluster_name | default('UNDEFINED') }}
+          wazuh_indexer_heap_size: {{ wazuh_indexer_heap_size | default('UNDEFINED') }}
+          wazuh_ssl_cert: {{ wazuh_ssl_cert | default('UNDEFINED') }}
+          wazuh_ssl_key: {{ wazuh_ssl_key | default('UNDEFINED') }}
+          wazuh_ssl_ca: {{ wazuh_ssl_ca | default('UNDEFINED') }}
+
+    - name: Test template rendering
+      template:
+        src: roles/wazuh_indexer/templates/opensearch.yml.j2
+        dest: /tmp/test_opensearch.yml
+        mode: '0644'
+      register: template_result
+
+    - name: Show template result
+      debug:
+        msg: "Template rendered successfully: {{ template_result.changed }}"
+
+    - name: Display rendered template
+      command: cat /tmp/test_opensearch.yml
+      register: template_content
+
+    - name: Show template content
+      debug:
+        msg: "{{ template_content.stdout_lines }}"
