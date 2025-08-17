@@ -1,0 +1,5 @@
+---
+- name: restart wazuh services
+  service:
+    name: wazuh-manager
+    state: restarted
