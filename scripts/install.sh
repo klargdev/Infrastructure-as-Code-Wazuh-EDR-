@@ -34,19 +34,38 @@ log "Generating initial dynamic inventory..."
 python3 inventory/auto-generator.py || err "Inventory generation failed."
 
 
-# Wait for Semaphore to be up
-log "Waiting for Semaphore to start..."
-until curl -s http://localhost:3000 >/dev/null; do sleep 2; done
 
-# Create admin user, project, inventory, and template using Semaphore CLI
+# Wait for Semaphore to be up and healthy
+log "Waiting for Semaphore to start (this may take up to 60 seconds)..."
+for i in {1..30}; do
+  if curl -s http://localhost:3000 >/dev/null; then
+    log "Semaphore UI is up."
+    break
+  fi
+  sleep 2
+  if [[ $i -eq 30 ]]; then err "Semaphore UI did not start in time."; fi
+done
+
+# Retry CLI project creation until successful
 log "Configuring Semaphore for one-click Wazuh EDR deployment..."
-docker exec semaphore semaphore user add --admin --login admin --name "Admin" --email admin@localhost --password changeme || true
-docker exec semaphore semaphore project add --name "IaC EDR" || true
-docker exec semaphore semaphore inventory add --project 1 --name "Dynamic Inventory" --type plugin --inventory /inventory/auto-generator.py || true
-docker exec semaphore semaphore template add --project 1 --name "Deploy Full Stack" --playbook /playbooks/00_setup_infra.yml --inventory 1 || true
+for i in {1..5}; do
+  docker exec semaphore semaphore user add --admin --login admin --name "Admin" --email admin@localhost --password changeme 2>/dev/null || true
+  docker exec semaphore semaphore project add --name "IaC EDR" 2>/dev/null && break
+  sleep 2
+  if [[ $i -eq 5 ]]; then err "Failed to create Semaphore project after multiple attempts."; fi
+done
+
+# Get project ID for "IaC EDR"
+PROJECT_ID=$(docker exec semaphore semaphore project list | awk '/IaC EDR/ {print $1}' | head -n1)
+if [[ -z "$PROJECT_ID" ]]; then err "Could not find IaC EDR project in Semaphore."; fi
+
+# Add inventory and template
+docker exec semaphore semaphore inventory add --project "$PROJECT_ID" --name "Dynamic Inventory" --type plugin --inventory /inventory/auto-generator.py || true
+docker exec semaphore semaphore template add --project "$PROJECT_ID" --name "Deploy Full Stack" --playbook /playbooks/00_setup_infra.yml --inventory 1 || true
 
 # Trigger the playbook run (deploy Wazuh EDR stack)
-docker exec semaphore semaphore task add --template 1 --environment 1 --inventory 1 --project 1 || true
+docker exec semaphore semaphore task add --template 1 --environment 1 --inventory 1 --project "$PROJECT_ID" || true
 
 log "Bootstrap complete! Semaphore and Wazuh EDR stack are fully deployed and ready!"
-log "Access the Semaphore UI at http://localhost:3000"
+log "Access the Semaphore UI at:   http://localhost:3000"
+log "Access the Wazuh Dashboard at: https://dashboard1:5601 (or your configured dashboard host)"
