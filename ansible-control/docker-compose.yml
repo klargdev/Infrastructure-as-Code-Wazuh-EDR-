@@ -8,10 +8,12 @@ services:
       - "3000:3000"
     environment:
       SEMAPHORE_DB_DIALECT: bolt
-      SEMAPHORE_ADMIN_PASSWORD: "${SEMAPHORE_ADMIN_PASSWORD:-changeme}"
-      SEMAPHORE_ADMIN_NAME: "admin"
-      SEMAPHORE_ADMIN_EMAIL: "admin@localhost"
-      SEMAPHORE_ADMIN: "admin"
+      SEMAPHORE_DB_PATH: /etc/semaphore/database.boltdb
+      SEMAPHORE_ADMIN_PASSWORD: changeme
+      SEMAPHORE_ADMIN_NAME: admin
+      SEMAPHORE_ADMIN_EMAIL: admin@localhost
+      SEMAPHORE_ADMIN: admin
+      SEMAPHORE_PLAYBOOK_PATH: /playbooks
       SEMAPHORE_PROJECT_NAME: "IaC EDR"
     volumes:
       - semaphore_data:/etc/semaphore
