@@ -1,0 +1,103 @@
+# main.yml - Common tasks for Wazuh EDR infrastructure
+
+- name: Update system packages
+  apt:
+    update_cache: yes
+    upgrade: yes
+  tags: [common, system]
+
+- name: Install common dependencies
+  apt:
+    name:
+      - curl
+      - wget
+      - unzip
+      - tar
+      - gnupg
+      - apt-transport-https
+      - ca-certificates
+      - software-properties-common
+    state: present
+    update_cache: yes
+  tags: [common, system]
+
+- name: Set timezone to UTC
+  timezone:
+    name: UTC
+  tags: [common, system]
+
+- name: Configure system limits for Wazuh
+  pam_limits:
+    domain: '*'
+    limit_type: '-'
+    limit_item: nofile
+    value: 65535
+  tags: [common, system]
+
+- name: Configure system limits for Wazuh (soft)
+  pam_limits:
+    domain: '*'
+    limit_type: soft
+    limit_item: nofile
+    value: 65535
+  tags: [common, system]
+
+- name: Configure system limits for Wazuh (hard)
+  pam_limits:
+    domain: '*'
+    limit_type: hard
+    limit_item: nofile
+    value: 65535
+  tags: [common, system]
+
+- name: Set vm.max_map_count for Elasticsearch
+  sysctl:
+    name: vm.max_map_count
+    value: '262144'
+    state: present
+    reload: yes
+  tags: [common, system]
+
+- name: Set vm.swappiness for better performance
+  sysctl:
+    name: vm.swappiness
+    value: '1'
+    state: present
+    reload: yes
+  tags: [common, system]
+
+- name: Create Wazuh user and group
+  user:
+    name: wazuh
+    system: yes
+    shell: /bin/false
+    home: /var/ossec
+    createhome: no
+  tags: [common, system]
+
+- name: Create Wazuh directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: wazuh
+    group: wazuh
+    mode: '0755'
+  loop:
+    - /var/ossec
+    - /var/ossec/logs
+    - /var/ossec/stats
+    - /var/ossec/var
+  tags: [common, system]
+
+- name: Ensure firewall allows Wazuh ports
+  ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop:
+    - 1514  # Wazuh manager
+    - 1515  # Wazuh cluster
+    - 9200  # Wazuh indexer
+    - 5601  # Wazuh dashboard
+  tags: [common, security]
+  ignore_errors: yes

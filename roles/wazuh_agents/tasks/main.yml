@@ -1,0 +1,78 @@
+# main.yml - Wazuh Agents installation and configuration
+
+- name: Add Wazuh GPG key for agents
+  apt_key:
+    url: https://packages.wazuh.com/key/GPG-KEY-WAZUH
+    state: present
+  tags: [install, agents]
+
+- name: Add Wazuh repository for agents
+  apt_repository:
+    repo: 'deb https://packages.wazuh.com/4.x/apt/ stable main'
+    state: present
+  tags: [install, agents]
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+  tags: [install, agents]
+
+- name: Install Wazuh agent
+  apt:
+    name: wazuh-agent
+    state: present
+    update_cache: yes
+  tags: [install, agents]
+
+- name: Create Wazuh agent configuration directory
+  file:
+    path: /var/ossec/etc
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  tags: [config, agents]
+
+- name: Deploy Wazuh agent configuration
+  template:
+    src: ossec-agent.conf.j2
+    dest: /var/ossec/etc/ossec.conf
+    owner: root
+    group: root
+    mode: '0640'
+  notify: restart wazuh agent
+  tags: [config, agents]
+
+- name: Register agent with Wazuh manager
+  command: /var/ossec/bin/agent-auth -m 127.0.0.1 -A "{{ inventory_hostname }}"
+  args:
+    creates: /var/ossec/etc/client.keys
+  register: agent_auth_result
+  tags: [config, agents]
+  ignore_errors: yes
+
+- name: Enable and start Wazuh agent service
+  systemd:
+    name: wazuh-agent
+    enabled: yes
+    state: started
+    daemon_reload: yes
+  tags: [service, agents]
+
+- name: Wait for Wazuh agent to be ready
+  wait_for:
+    port: 1514
+    host: 127.0.0.1
+    timeout: 60
+  tags: [service, agents]
+
+- name: Check agent status
+  command: /var/ossec/bin/agent_control -l
+  register: agent_status
+  changed_when: false
+  tags: [service, agents]
+
+- name: Display agent status
+  debug:
+    var: agent_status.stdout_lines
+  tags: [service, agents]

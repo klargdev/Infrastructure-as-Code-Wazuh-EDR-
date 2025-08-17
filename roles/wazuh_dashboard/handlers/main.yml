@@ -1,0 +1,8 @@
+# handlers/main.yml - Handlers for Wazuh Dashboard role
+
+- name: restart wazuh dashboard
+  systemd:
+    name: wazuh-dashboard
+    state: restarted
+    daemon_reload: yes
+  listen: "restart wazuh dashboard"

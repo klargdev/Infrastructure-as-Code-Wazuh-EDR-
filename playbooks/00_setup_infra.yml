@@ -8,30 +8,22 @@
     - ../group_vars/all.yml
   vars:
     ansible_python_interpreter: /usr/bin/python3
-  tasks:
-    - name: Include Wazuh Server role
-      import_role:
-        name: wazuh_server
-      tags: [server, core]
-
-    - name: Include Wazuh Indexer role
-      import_role:
-        name: wazuh_indexer
-      tags: [indexer, core]
-
-    - name: Include Wazuh Dashboard role
-      import_role:
-        name: wazuh_dashboard
-      tags: [dashboard, core]
-
-    - name: Include Wazuh Agents role
-      import_role:
-        name: wazuh_agents
-      tags: [agents]
+  roles:
+    - common
+    - wazuh_indexer
+    - wazuh_server
+    - wazuh_dashboard
+    - wazuh_agents
+  tags: [core, all]
 
   handlers:
     - name: Restart all Wazuh services
-      service:
-        name: wazuh-manager
+      systemd:
+        name: "{{ item }}"
         state: restarted
-      listen: "restart wazuh services"
+      loop:
+        - wazuh-manager
+        - wazuh-indexer
+        - wazuh-dashboard
+        - filebeat
+      listen: "restart all wazuh services"

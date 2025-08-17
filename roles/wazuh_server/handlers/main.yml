@@ -1,5 +1,26 @@
 ---
+# handlers/main.yml - Handlers for Wazuh Server role
+
 - name: restart wazuh services
-  service:
+  systemd:
+    name: "{{ item }}"
+    state: restarted
+    daemon_reload: yes
+  loop:
+    - wazuh-manager
+    - filebeat
+  listen: "restart wazuh services"
+
+- name: restart wazuh manager
+  systemd:
     name: wazuh-manager
     state: restarted
+    daemon_reload: yes
+  listen: "restart wazuh manager"
+
+- name: restart filebeat
+  systemd:
+    name: filebeat
+    state: restarted
+    daemon_reload: yes
+  listen: "restart filebeat"

@@ -1,0 +1,56 @@
+<!-- Wazuh Agent Configuration -->
+<ossec_config>
+  <!-- Global Settings -->
+  <global>
+    <jsonout_output>yes</jsonout_output>
+    <alerts_log>yes</alerts_log>
+    <logall>no</logall>
+  </global>
+
+  <!-- Client Configuration -->
+  <client>
+    <server-ip>{{ wazuh_manager_host }}</server-ip>
+    <config-profile>ubuntu</config-profile>
+  </client>
+
+  <!-- System Check -->
+  <syscheck>
+    <frequency>43200</frequency>
+    <scan_on_start>yes</scan_on_start>
+    <auto_ignore>no</auto_ignore>
+    <scan_time>2</scan_time>
+  </syscheck>
+
+  <!-- Root Check -->
+  <rootcheck>
+    <frequency>43200</frequency>
+    <auto_ignore>no</auto_ignore>
+  </rootcheck>
+
+  <!-- Log Analysis -->
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/syslog</location>
+  </localfile>
+
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/auth.log</location>
+  </localfile>
+
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/dpkg.log</location>
+  </localfile>
+
+  <!-- Process Monitoring -->
+  <localfile>
+    <log_format>full_command</log_format>
+    <command>ps -ef</command>
+  </localfile>
+
+  <localfile>
+    <log_format>full_command</log_format>
+    <command>netstat -tuln</command>
+  </localfile>
+</ossec_config>

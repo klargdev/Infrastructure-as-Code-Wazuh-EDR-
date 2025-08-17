@@ -1,0 +1,29 @@
+# JVM options for Wazuh Indexer
+-Xms{{ wazuh_indexer_heap_size }}
+-Xmx{{ wazuh_indexer_heap_size }}
+
+# Garbage collection
+-XX:+UseG1GC
+-XX:G1ReservePercent=25
+-XX:InitiatingHeapOccupancyPercent=75
+
+# Memory settings
+-XX:+UseConcMarkSweepGC
+-XX:CMSInitiatingOccupancyFraction=75
+-XX:+UseCMSInitiatingOccupancyOnly
+
+# Performance tuning
+-XX:+DisableExplicitGC
+-XX:+AlwaysPreTouch
+-server
+-Djava.awt.headless=true
+-Dfile.encoding=UTF-8
+-Djna.nosys=true
+
+# Security
+-Dlog4j2.formatMsgNoLookups=true
+-Dlog4j2.disable.jmx=true
+
+# Network settings
+-Dio.netty.allocator.type=pooled
+-Dio.netty.allocator.numDirectArenas=0

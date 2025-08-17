@@ -1,4 +1,4 @@
-Author: [Your Name]
+Author: [Lartey Kpabitey Gabriel]
 Date: [YYYY-MM-DD]
 Version: 1.0
 

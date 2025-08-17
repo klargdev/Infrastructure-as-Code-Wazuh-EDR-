@@ -1,59 +1,76 @@
+<!-- Wazuh Server Configuration -->
 <ossec_config>
+  <!-- Global Settings -->
   <global>
-    <email_notification>no</email_notification>
+    <jsonout_output>yes</jsonout_output>
+    <alerts_log>yes</alerts_log>
     <logall>no</logall>
-    <logall_json>no</logall_json>
-    <white_list>127.0.0.1</white_list>
+    <memory_size>8G</memory_size>
   </global>
+
+  <!-- Cluster Configuration -->
+  <cluster>
+    <name>{{ wazuh_manager_cluster_name }}</name>
+    <node_name>{{ wazuh_manager_node_name }}</node_name>
+    <node_type>master</node_type>
+    <key>c98b79a8b5d49b36b18728a870dda286</key>
+    <port>1515</port>
+    <bind_addr>0.0.0.0</bind_addr>
+    <nodes>
+      <node>{{ wazuh_manager_node_name }}</node>
+    </nodes>
+    <hidden>no</hidden>
+    <disabled>no</disabled>
+  </cluster>
+
+  <!-- Indexer Integration -->
+  <integration>
+    <name>wazuh</name>
+    <api_url>https://{{ wazuh_indexer_host }}:{{ wazuh_indexer_port }}</api_url>
+    <api_username>{{ wazuh_indexer_user }}</api_username>
+    <api_password>{{ wazuh_indexer_password }}</api_password>
+    <api_verify_ssl>no</api_verify_ssl>
+  </integration>
+
+  <!-- Filebeat Integration -->
+  <integration>
+    <name>filebeat</name>
+    <hook_url>http://{{ wazuh_manager_host }}:1514</hook_url>
+  </integration>
+
+  <!-- System Check -->
+  <syscheck>
+    <frequency>{{ wazuh_manager_syscheck_frequency }}</frequency>
+    <scan_on_start>yes</scan_on_start>
+    <auto_ignore>no</auto_ignore>
+    <scan_time>2</scan_time>
+  </syscheck>
+
+  <!-- Root Check -->
+  <rootcheck>
+    <frequency>{{ wazuh_manager_rootcheck_frequency }}</frequency>
+    <auto_ignore>no</auto_ignore>
+  </rootcheck>
+
+  <!-- Alerts -->
   <alerts>
     <log_alert_level>3</log_alert_level>
-    <email_alert_level>7</email_alert_level>
+    <email_alert>{{ wazuh_manager_email_alert | lower }}</email_alert>
   </alerts>
-  <remote>
-    <connection>secure</connection>
-    <port>1514</port>
-  </remote>
-  <ruleset>
-    <decoder_dir>/var/ossec/ruleset/decoders</decoder_dir>
-    <rule_dir>/var/ossec/ruleset/rules</rule_dir>
-    <rule_exclude>0215-policy_rules.xml</rule_exclude>
-  </ruleset>
-  <syscheck>
-    <disabled>no</disabled>
-    <frequency>43200</frequency>
-    <scan_on_start>yes</scan_on_start>
-    <directories check_all="yes" realtime="yes">/etc,/usr/bin,/usr/sbin</directories>
-  </syscheck>
-  <rootcheck>
-    <disabled>no</disabled>
-  </rootcheck>
+
+  <!-- Log Analysis -->
   <localfile>
     <log_format>syslog</log_format>
     <location>/var/log/syslog</location>
   </localfile>
+
   <localfile>
     <log_format>syslog</log_format>
     <location>/var/log/auth.log</location>
   </localfile>
-  <auth>
-    <disabled>no</disabled>
-    <port>1515</port>
-    <use_source_ip>yes</use_source_ip>
-    <purge>yes</purge>
-    <use_password>no</use_password>
-  </auth>
-  <cluster>
-    <name>wazuh</name>
-    <node_name>node01</node_name>
-    <node_type>master</node_type>
-    <key>01234567890123456789012345678901</key>
-    <port>1516</port>
-    <bind_addr>0.0.0.0</bind_addr>
-    <nodes>127.0.0.1</nodes>
-  </cluster>
-  <logging>
-    <log_format>plain</log_format>
-    <log_level>info</log_level>
-    <log_path>/var/ossec/logs/ossec.log</log_path>
-  </logging>
+
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/dpkg.log</location>
+  </localfile>
 </ossec_config>

@@ -1,0 +1,114 @@
+# main.yml - Wazuh Dashboard (Kibana) installation and configuration
+
+- name: Add Wazuh Dashboard GPG key
+  apt_key:
+    url: https://packages.wazuh.com/key/GPG-KEY-WAZUH
+    state: present
+  tags: [install, dashboard]
+
+- name: Add Wazuh Dashboard repository
+  apt_repository:
+    repo: 'deb https://packages.wazuh.com/4.x/apt/ stable main'
+    state: present
+  tags: [install, dashboard]
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+  tags: [install, dashboard]
+
+- name: Install Wazuh Dashboard
+  apt:
+    name: wazuh-dashboard
+    state: present
+    update_cache: yes
+  tags: [install, dashboard]
+
+- name: Create Wazuh Dashboard configuration directory
+  file:
+    path: /etc/wazuh-dashboard
+    state: directory
+    owner: wazuh-dashboard
+    group: wazuh-dashboard
+    mode: '0755'
+  tags: [config, dashboard]
+
+- name: Deploy Wazuh Dashboard configuration
+  template:
+    src: opensearch_dashboards.yml.j2
+    dest: /etc/wazuh-dashboard/opensearch_dashboards.yml
+    owner: wazuh-dashboard
+    group: wazuh-dashboard
+    mode: '0640'
+  notify: restart wazuh dashboard
+  tags: [config, dashboard]
+
+- name: Create certificates directory
+  file:
+    path: /etc/wazuh-dashboard/certs
+    state: directory
+    owner: wazuh-dashboard
+    group: wazuh-dashboard
+    mode: '0755'
+  tags: [config, dashboard]
+
+- name: Extract certificates
+  unarchive:
+    src: /tmp/wazuh-certificates.tar
+    dest: /etc/wazuh-dashboard/certs/
+    remote_src: yes
+    owner: wazuh-dashboard
+    group: wazuh-dashboard
+  tags: [config, dashboard]
+
+- name: Set proper permissions for certificates
+  file:
+    path: /etc/wazuh-dashboard/certs
+    owner: wazuh-dashboard
+    group: wazuh-dashboard
+    mode: '0755'
+    recurse: yes
+  tags: [config, dashboard]
+
+- name: Create Wazuh Dashboard keystore
+  command: /usr/share/wazuh-dashboard/bin/opensearch-dashboards-keystore create
+  args:
+    creates: /etc/wazuh-dashboard/opensearch_dashboards.keystore
+  tags: [config, dashboard]
+
+- name: Add Wazuh Indexer username to keystore
+  shell: echo admin | /usr/share/wazuh-dashboard/bin/opensearch-dashboards-keystore add opensearch.username --stdin --force
+  tags: [config, dashboard]
+
+- name: Add Wazuh Indexer password to keystore
+  shell: echo admin | /usr/share/wazuh-dashboard/bin/opensearch-dashboards-keystore add opensearch.password --stdin --force
+  tags: [config, dashboard]
+
+- name: Enable and start Wazuh Dashboard service
+  systemd:
+    name: wazuh-dashboard
+    enabled: yes
+    state: started
+    daemon_reload: yes
+  tags: [service, dashboard]
+
+- name: Wait for Wazuh Dashboard to be ready
+  wait_for:
+    port: 5601
+    host: 127.0.0.1
+    timeout: 120
+  tags: [service, dashboard]
+
+- name: Install Wazuh Dashboard plugin
+  command: /usr/share/wazuh-dashboard/bin/opensearch-dashboards-plugin install https://packages.wazuh.com/4.x/ui/dashboard/wazuh-dashboard-plugin-4.12.0.zip
+  args:
+    creates: /usr/share/wazuh-dashboard/plugins/wazuh
+  tags: [config, dashboard]
+  ignore_errors: yes
+
+- name: Restart Wazuh Dashboard after plugin installation
+  systemd:
+    name: wazuh-dashboard
+    state: restarted
+  when: ansible_check_mode is not defined
+  tags: [service, dashboard]

@@ -1,0 +1,136 @@
+# main.yml - Wazuh Indexer (Elasticsearch) installation and configuration
+
+- name: Ensure Java is installed
+  apt:
+    name: openjdk-17-jdk
+    state: present
+    update_cache: yes
+  tags: [install, indexer]
+
+- name: Set JAVA_HOME environment variable
+  lineinfile:
+    path: /etc/environment
+    line: 'JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64'
+    state: present
+  tags: [install, indexer]
+
+- name: Add Wazuh Indexer GPG key
+  apt_key:
+    url: https://packages.wazuh.com/key/GPG-KEY-WAZUH
+    state: present
+  tags: [install, indexer]
+
+- name: Add Wazuh Indexer repository
+  apt_repository:
+    repo: 'deb https://packages.wazuh.com/4.x/apt/ stable main'
+    state: present
+  tags: [install, indexer]
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+  tags: [install, indexer]
+
+- name: Install Wazuh Indexer
+  apt:
+    name: wazuh-indexer
+    state: present
+    update_cache: yes
+  tags: [install, indexer]
+
+- name: Create Wazuh Indexer configuration directory
+  file:
+    path: /etc/wazuh-indexer
+    state: directory
+    owner: wazuh-indexer
+    group: wazuh-indexer
+    mode: '0755'
+  tags: [config, indexer]
+
+- name: Deploy Wazuh Indexer configuration
+  template:
+    src: opensearch.yml.j2
+    dest: /etc/wazuh-indexer/opensearch.yml
+    owner: wazuh-indexer
+    group: wazuh-indexer
+    mode: '0640'
+  notify: restart wazuh indexer
+  tags: [config, indexer]
+
+- name: Deploy JVM options configuration
+  template:
+    src: jvm.options.j2
+    dest: /etc/wazuh-indexer/jvm.options
+    owner: wazuh-indexer
+    group: wazuh-indexer
+    mode: '0640'
+  notify: restart wazuh indexer
+  tags: [config, indexer]
+
+- name: Create certificates directory
+  file:
+    path: /etc/wazuh-indexer/certs
+    state: directory
+    owner: wazuh-indexer
+    group: wazuh-indexer
+    mode: '0755'
+  tags: [config, indexer]
+
+- name: Extract certificates
+  unarchive:
+    src: /tmp/wazuh-certificates.tar
+    dest: /etc/wazuh-indexer/certs/
+    remote_src: yes
+    owner: wazuh-indexer
+    group: wazuh-indexer
+  tags: [config, indexer]
+
+- name: Set proper permissions for certificates
+  file:
+    path: /etc/wazuh-indexer/certs
+    owner: wazuh-indexer
+    group: wazuh-indexer
+    mode: '0755'
+    recurse: yes
+  tags: [config, indexer]
+
+- name: Enable and start Wazuh Indexer service
+  systemd:
+    name: wazuh-indexer
+    enabled: yes
+    state: started
+    daemon_reload: yes
+  tags: [service, indexer]
+
+- name: Wait for Wazuh Indexer to be ready
+  wait_for:
+    port: 9200
+    host: 127.0.0.1
+    timeout: 120
+  tags: [service, indexer]
+
+- name: Create admin user
+  uri:
+    url: https://127.0.0.1:9200/_security/user/admin
+    method: POST
+    headers:
+      Content-Type: application/json
+    body: '{"password":"admin","opendistro_security_roles":["admin"],"backend_roles":["admin"]}'
+    validate_certs: no
+    status_code: [200, 201, 409]
+  register: admin_user_result
+  tags: [config, indexer]
+  ignore_errors: yes
+
+- name: Create Wazuh alerts index template
+  uri:
+    url: https://127.0.0.1:9200/_template/wazuh-alerts
+    method: PUT
+    headers:
+      Content-Type: application/json
+    body: '{"index_patterns":["wazuh-alerts-*"],"settings":{"number_of_shards":1,"number_of_replicas":0}}'
+    validate_certs: no
+    status_code: [200, 201]
+  register: template_result
+  tags: [config, indexer]
+  ignore_errors: yes
