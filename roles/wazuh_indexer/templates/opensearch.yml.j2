@@ -7,22 +7,14 @@ network.host: {{ wazuh_indexer_network_host }}
 http.port: {{ wazuh_indexer_http_port }}
 transport.port: {{ wazuh_indexer_transport_port }}
 
-# Security settings
-plugins.security.ssl.http.enabled: true
-plugins.security.ssl.transport.enabled: true
-plugins.security.ssl.http.pemcert_filepath: {{ wazuh_ssl_cert }}
-plugins.security.ssl.http.pemkey_filepath: {{ wazuh_ssl_key }}
-plugins.security.ssl.http.pemtrustedcas_filepath: {{ wazuh_ssl_ca }}
-plugins.security.ssl.transport.pemcert_filepath: {{ wazuh_ssl_cert }}
-plugins.security.ssl.transport.pemkey_filepath: {{ wazuh_ssl_key }}
-plugins.security.ssl.transport.pemtrustedcas_filepath: {{ wazuh_ssl_ca }}
+# Security settings (disabled for initial deployment)
+# plugins.security.ssl.http.enabled: false
+# plugins.security.ssl.transport.enabled: false
 
-# Authentication
-plugins.security.authc.admin_dn:
-  - CN=admin,OU=IT,O=Wazuh,L=San Jose,ST=CA,C=US
+# Note: SSL will be enabled after initial deployment and testing
 
 # Performance settings
-bootstrap.memory_lock: true
+bootstrap.memory_lock: false
 path.data: /var/lib/wazuh-indexer
 path.logs: /var/log/wazuh-indexer
 path.config: /etc/wazuh-indexer

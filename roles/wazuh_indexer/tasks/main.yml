@@ -94,6 +94,53 @@
     recurse: yes
   tags: [config, indexer]
 
+- name: Create Wazuh Indexer data directory
+  file:
+    path: /var/lib/wazuh-indexer
+    state: directory
+    owner: wazuh-indexer
+    group: wazuh-indexer
+    mode: '0755'
+  tags: [config, indexer]
+
+- name: Create Wazuh Indexer logs directory
+  file:
+    path: /var/log/wazuh-indexer
+    state: directory
+    owner: wazuh-indexer
+    group: wazuh-indexer
+    mode: '0755'
+  tags: [config, indexer]
+
+- name: Set system limits for wazuh-indexer user
+  pam_limits:
+    domain: wazuh-indexer
+    limit_type: '-'
+    limit_item: nofile
+    value: 65535
+  tags: [config, indexer]
+
+- name: Set system limits for wazuh-indexer user (soft)
+  pam_limits:
+    domain: wazuh-indexer
+    limit_type: soft
+    limit_item: nofile
+    value: 65535
+  tags: [config, indexer]
+
+- name: Set system limits for wazuh-indexer user (hard)
+  pam_limits:
+    domain: wazuh-indexer
+    limit_type: hard
+    limit_item: nofile
+    value: 65535
+  tags: [config, indexer]
+
+- name: Reload systemd daemon
+  systemd:
+    daemon_reload: yes
+  tags: [config, indexer]
+
 - name: Enable and start Wazuh Indexer service
   systemd:
     name: wazuh-indexer

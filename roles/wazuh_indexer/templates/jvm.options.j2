@@ -2,15 +2,11 @@
 -Xms{{ wazuh_indexer_heap_size }}
 -Xmx{{ wazuh_indexer_heap_size }}
 
-# Garbage collection
+# Garbage collection (using G1GC for better performance)
 -XX:+UseG1GC
 -XX:G1ReservePercent=25
 -XX:InitiatingHeapOccupancyPercent=75
-
-# Memory settings
--XX:+UseConcMarkSweepGC
--XX:CMSInitiatingOccupancyFraction=75
--XX:+UseCMSInitiatingOccupancyOnly
+-XX:MaxGCPauseMillis=200
 
 # Performance tuning
 -XX:+DisableExplicitGC
