@@ -39,7 +39,6 @@
     <disabled>no</disabled>
     <port>1515</port>
     <use_source_ip>yes</use_source_ip>
-    <force>yes</force>
     <purge>yes</purge>
     <use_password>no</use_password>
   </auth>
@@ -52,4 +51,9 @@
     <bind_addr>0.0.0.0</bind_addr>
     <nodes>127.0.0.1</nodes>
   </cluster>
+  <logging>
+    <log_format>plain</log_format>
+    <log_level>info</log_level>
+    <log_path>/var/ossec/logs/ossec.log</log_path>
+  </logging>
 </ossec_config>
