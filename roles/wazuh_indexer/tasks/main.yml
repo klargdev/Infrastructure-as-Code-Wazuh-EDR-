@@ -14,6 +14,21 @@
     state: present
   tags: [install, indexer]
 
+- name: Set vm.max_map_count kernel parameter
+  sysctl:
+    name: vm.max_map_count
+    value: "262144"
+    state: present
+    reload: yes
+  tags: [config, indexer]
+
+- name: Set vm.max_map_count permanently
+  lineinfile:
+    path: /etc/sysctl.conf
+    line: 'vm.max_map_count=262144'
+    state: present
+  tags: [config, indexer]
+
 - name: Add Wazuh Indexer GPG key
   apt_key:
     url: https://packages.wazuh.com/key/GPG-KEY-WAZUH
@@ -84,6 +99,7 @@
     owner: wazuh-indexer
     group: wazuh-indexer
   tags: [config, indexer]
+  ignore_errors: yes
 
 - name: Set proper permissions for certificates
   file:
@@ -134,6 +150,44 @@
     limit_type: hard
     limit_item: nofile
     value: 65535
+  tags: [config, indexer]
+
+- name: Validate Wazuh Indexer configuration
+  command: /usr/share/wazuh-indexer/bin/opensearch --config-test-mode
+  register: opensearch_test
+  changed_when: false
+  ignore_errors: yes
+  become: no
+  become_user: wazuh-indexer
+  tags: [config, indexer]
+
+- name: Show configuration errors if any
+  debug:
+    var: opensearch_test.stderr
+  when: opensearch_test.rc != 0
+  tags: [config, indexer]
+
+- name: Test manual startup (dry run)
+  command: timeout 10s /usr/share/wazuh-indexer/bin/opensearch -d -p /tmp/opensearch-test.pid
+  register: opensearch_startup_test
+  changed_when: false
+  ignore_errors: yes
+  become: no
+  become_user: wazuh-indexer
+  tags: [config, indexer]
+
+- name: Show startup test results
+  debug:
+    var: opensearch_startup_test
+  tags: [config, indexer]
+
+- name: Clean up test process if running
+  shell: |
+    if [ -f /tmp/opensearch-test.pid ]; then
+      kill $(cat /tmp/opensearch-test.pid) 2>/dev/null || true
+      rm -f /tmp/opensearch-test.pid
+    fi
+  ignore_errors: yes
   tags: [config, indexer]
 
 - name: Reload systemd daemon

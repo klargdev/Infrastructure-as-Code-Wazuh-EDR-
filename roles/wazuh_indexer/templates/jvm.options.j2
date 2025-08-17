@@ -1,6 +1,6 @@
-# JVM options for Wazuh Indexer
--Xms{{ wazuh_indexer_heap_size | default('512m') }}
--Xmx{{ wazuh_indexer_heap_size | default('512m') }}
+# JVM options for Wazuh Indexer - Conservative settings for stability
+-Xms{{ wazuh_indexer_heap_size | default('256m') }}
+-Xmx{{ wazuh_indexer_heap_size | default('256m') }}
 
 # Garbage collection (using G1GC for better performance)
 -XX:+UseG1GC
@@ -24,13 +24,20 @@
 -Dio.netty.allocator.type=pooled
 -Dio.netty.allocator.numDirectArenas=0
 
-# Error handling and debugging
+# Error handling and debugging - Reduced for production stability
 -XX:+PrintGCDetails
 -XX:+PrintGCTimeStamps
 -XX:+PrintGCDateStamps
--XX:+PrintTenuringDistribution
--XX:+PrintGCApplicationStoppedTime
 -Xloggc:/var/log/wazuh-indexer/gc.log
 -XX:+UseGCLogFileRotation
--XX:NumberOfGCLogFiles=10
--XX:GCLogFileSize=100M
+-XX:NumberOfGCLogFiles=5
+-XX:GCLogFileSize=50M
+
+# Memory management - Conservative settings
+-XX:+UseStringDeduplication
+-XX:MaxMetaspaceSize=256m
+-XX:CompressedClassSpaceSize=128m
+
+# System properties for stability
+-Djava.security.egd=file:/dev/./urandom
+-Dsun.net.http.allowRestrictedHeaders=true

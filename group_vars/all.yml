@@ -60,10 +60,13 @@ wazuh_agent_service: "wazuh-agent"
 wazuh_log_level: "info"
 wazuh_log_format: "default"
 
-# Performance tuning - More conservative settings
-wazuh_indexer_heap_size: "512m"
+# Performance tuning - Very conservative settings for stability
+wazuh_indexer_heap_size: "256m"
 wazuh_indexer_max_open_files: 65535
 wazuh_indexer_max_locked_memory: "unlimited"
+
+# System kernel parameters
+wazuh_vm_max_map_count: 262144
 
 # Security configuration - Disable SSL for initial deployment
 wazuh_ssl_enabled: false
