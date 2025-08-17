@@ -1,0 +1,37 @@
+---
+# 00_setup_infra.yml - Main playbook for Wazuh EDR deployment
+# Deploys Wazuh Server, Indexer, Dashboard, and Agents with environment segregation and dry-run support
+- name: Setup Wazuh EDR Infrastructure
+  hosts: all
+  become: true
+  vars_files:
+    - ../group_vars/all.yml
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  tasks:
+    - name: Include Wazuh Server role
+      import_role:
+        name: wazuh_server
+      tags: [server, core]
+
+    - name: Include Wazuh Indexer role
+      import_role:
+        name: wazuh_indexer
+      tags: [indexer, core]
+
+    - name: Include Wazuh Dashboard role
+      import_role:
+        name: wazuh_dashboard
+      tags: [dashboard, core]
+
+    - name: Include Wazuh Agents role
+      import_role:
+        name: wazuh_agents
+      tags: [agents]
+
+  handlers:
+    - name: Restart all Wazuh services
+      service:
+        name: wazuh-manager
+        state: restarted
+      listen: "restart wazuh services"

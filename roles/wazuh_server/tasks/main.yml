@@ -1,0 +1,38 @@
+---
+# main.yml - Core tasks for Wazuh Server role
+# Installs and configures Wazuh Server with secure defaults, handlers, and templates
+- name: Install Wazuh repository GPG key
+  apt_key:
+    url: https://packages.wazuh.com/key/GPG-KEY-WAZUH
+    state: present
+  tags: [install, server]
+
+- name: Add Wazuh repository
+  apt_repository:
+    repo: 'deb https://packages.wazuh.com/4.x/apt/ stable main'
+    state: present
+  tags: [install, server]
+
+- name: Install Wazuh manager
+  apt:
+    name: wazuh-manager
+    state: present
+    update_cache: yes
+  tags: [install, server]
+
+- name: Deploy ossec.conf from template
+  template:
+    src: ossec.conf.j2
+    dest: /var/ossec/etc/ossec.conf
+    owner: root
+    group: ossec
+    mode: '0640'
+  notify: restart wazuh services
+  tags: [config, server]
+
+- name: Ensure wazuh-manager is running
+  service:
+    name: wazuh-manager
+    state: started
+    enabled: yes
+  tags: [service, server]
