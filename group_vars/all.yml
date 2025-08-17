@@ -60,13 +60,13 @@ wazuh_agent_service: "wazuh-agent"
 wazuh_log_level: "info"
 wazuh_log_format: "default"
 
-# Performance tuning
-wazuh_indexer_heap_size: "1g"
+# Performance tuning - More conservative settings
+wazuh_indexer_heap_size: "512m"
 wazuh_indexer_max_open_files: 65535
 wazuh_indexer_max_locked_memory: "unlimited"
 
-# Security configuration
-wazuh_ssl_enabled: true
+# Security configuration - Disable SSL for initial deployment
+wazuh_ssl_enabled: false
 wazuh_ssl_cert: "{{ wazuh_certs_dir }}/wazuh-1.pem"
 wazuh_ssl_key: "{{ wazuh_certs_dir }}/wazuh-1-key.pem"
 wazuh_ssl_ca: "{{ wazuh_certs_dir }}/ca.crt"

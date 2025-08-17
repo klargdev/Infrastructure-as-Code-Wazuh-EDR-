@@ -1,6 +1,6 @@
 # JVM options for Wazuh Indexer
--Xms{{ wazuh_indexer_heap_size }}
--Xmx{{ wazuh_indexer_heap_size }}
+-Xms{{ wazuh_indexer_heap_size | default('512m') }}
+-Xmx{{ wazuh_indexer_heap_size | default('512m') }}
 
 # Garbage collection (using G1GC for better performance)
 -XX:+UseG1GC
@@ -23,3 +23,14 @@
 # Network settings
 -Dio.netty.allocator.type=pooled
 -Dio.netty.allocator.numDirectArenas=0
+
+# Error handling and debugging
+-XX:+PrintGCDetails
+-XX:+PrintGCTimeStamps
+-XX:+PrintGCDateStamps
+-XX:+PrintTenuringDistribution
+-XX:+PrintGCApplicationStoppedTime
+-Xloggc:/var/log/wazuh-indexer/gc.log
+-XX:+UseGCLogFileRotation
+-XX:NumberOfGCLogFiles=10
+-XX:GCLogFileSize=100M

@@ -7,11 +7,20 @@ network.host: {{ wazuh_indexer_network_host }}
 http.port: {{ wazuh_indexer_http_port }}
 transport.port: {{ wazuh_indexer_transport_port }}
 
-# Security settings (disabled for initial deployment)
-# plugins.security.ssl.http.enabled: false
-# plugins.security.ssl.transport.enabled: false
-
-# Note: SSL will be enabled after initial deployment and testing
+# Security settings
+{% if wazuh_ssl_enabled %}
+plugins.security.ssl.http.enabled: true
+plugins.security.ssl.transport.enabled: true
+plugins.security.ssl.http.pemcert_filepath: {{ wazuh_ssl_cert }}
+plugins.security.ssl.http.pemkey_filepath: {{ wazuh_ssl_key }}
+plugins.security.ssl.transport.pemcert_filepath: {{ wazuh_ssl_cert }}
+plugins.security.ssl.transport.pemkey_filepath: {{ wazuh_ssl_key }}
+plugins.security.ssl.transport.pemtrustedcas_filepath: {{ wazuh_ssl_ca }}
+plugins.security.ssl.http.pemtrustedcas_filepath: {{ wazuh_ssl_ca }}
+{% else %}
+plugins.security.ssl.http.enabled: false
+plugins.security.ssl.transport.enabled: false
+{% endif %}
 
 # Performance settings
 bootstrap.memory_lock: false
@@ -21,3 +30,19 @@ path.config: /etc/wazuh-indexer
 
 # Discovery settings
 discovery.type: single-node
+
+# Security plugin configuration
+plugins.security.allow_unsafe_democertificates: true
+plugins.security.allow_default_init_securityindex: true
+plugins.security.nodes_dn_dynamic_config_enabled: true
+plugins.security.audit.type: internal_opensearch
+plugins.security.enable_snapshot_restore_privilege: true
+plugins.security.check_snapshot_restore_privilege: true
+plugins.security.restapi.roles_enabled: ["all_access", "security_rest_api_access"]
+plugins.security.system_indices.enabled: true
+plugins.security.system_indices.permissions.enabled: true
+
+# Performance tuning
+indices.memory.index_buffer_size: 30%
+indices.queries.cache.size: 10%
+indices.fielddata.cache.size: 10%
