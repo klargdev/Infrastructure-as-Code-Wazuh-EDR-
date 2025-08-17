@@ -200,15 +200,28 @@ EOF
 run_ansible_deployment() {
     step "Running Ansible deployment..."
     
-    # Check if we're in the right directory
-    if [[ ! -f "playbooks/00_setup_infra.yml" ]]; then
-        err "Please run this script from the project root directory"
+    # Get the directory where this script is located
+    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    
+    log "Script directory: $script_dir"
+    log "Current working directory: $(pwd)"
+    
+    # Check if we're in the right directory or if the script is in the right place
+    if [[ ! -f "$script_dir/playbooks/00_setup_infra.yml" ]]; then
+        err "Playbook not found at $script_dir/playbooks/00_setup_infra.yml"
     fi
     
     # Check if inventory exists
-    if [[ ! -f "inventory/production.ini" ]]; then
-        err "Production inventory not found"
+    if [[ ! -f "$script_dir/inventory/production.ini" ]]; then
+        err "Production inventory not found at $script_dir/inventory/production.ini"
     fi
+    
+    log "Playbook found at: $script_dir/playbooks/00_setup_infra.yml"
+    log "Inventory found at: $script_dir/inventory/production.ini"
+    
+    # Change to the script directory to run the playbook
+    cd "$script_dir"
+    log "Changed to directory: $(pwd)"
     
     # Run the playbook
     if ansible-playbook -i inventory/production.ini playbooks/00_setup_infra.yml --verbose; then
