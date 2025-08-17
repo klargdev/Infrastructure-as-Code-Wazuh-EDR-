@@ -3,6 +3,7 @@
     <email_notification>no</email_notification>
     <logall>no</logall>
     <logall_json>no</logall_json>
+    <white_list>127.0.0.1</white_list>
   </global>
   <alerts>
     <log_alert_level>3</log_alert_level>
@@ -26,4 +27,29 @@
   <rootcheck>
     <disabled>no</disabled>
   </rootcheck>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/syslog</location>
+  </localfile>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/auth.log</location>
+  </localfile>
+  <auth>
+    <disabled>no</disabled>
+    <port>1515</port>
+    <use_source_ip>yes</use_source_ip>
+    <force_insert>yes</force_insert>
+    <purge>yes</purge>
+    <use_password>no</use_password>
+  </auth>
+  <cluster>
+    <name>wazuh</name>
+    <node_name>node01</node_name>
+    <node_type>master</node_type>
+    <key>01234567890123456789012345678901</key>
+    <port>1516</port>
+    <bind_addr>0.0.0.0</bind_addr>
+    <nodes>127.0.0.1</nodes>
+  </cluster>
 </ossec_config>
