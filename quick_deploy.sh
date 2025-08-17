@@ -56,12 +56,7 @@ if [[ ! -f "/tmp/wazuh-certificates.tar" ]]; then
     openssl x509 -req -in wazuh-1.csr -CA ca.crt -CAkey ca.key \
         -CAcreateserial -out wazuh-1.pem -days 3650
     
-    # Generate Filebeat certificate
-    openssl genrsa -out filebeat.key 2048
-    openssl req -new -key filebeat.key -out filebeat.csr \
-        -subj "/C=US/ST=CA/L=San Jose/O=Wazuh/OU=IT/CN=filebeat"
-    openssl x509 -req -in filebeat.csr -CA ca.crt -CAkey ca.key \
-        -CAcreateserial -out filebeat.crt -days 3650
+
     
     # Create certificates archive
     tar -czf /tmp/wazuh-certificates.tar .

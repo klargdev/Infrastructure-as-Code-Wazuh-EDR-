@@ -32,11 +32,7 @@
     <api_verify_ssl>no</api_verify_ssl>
   </integration>
 
-  <!-- Filebeat Integration -->
-  <integration>
-    <name>filebeat</name>
-    <hook_url>http://{{ wazuh_manager_host }}:1514</hook_url>
-  </integration>
+  <!-- Note: Filebeat integration removed. Wazuh Agent handles log collection directly. -->
 
   <!-- System Check -->
   <syscheck>

@@ -64,7 +64,7 @@ if ansible-playbook -i inventory/production.ini playbooks/00_setup_infra.yml --v
     log "  systemctl status wazuh-indexer"
     log "  systemctl status wazuh-dashboard"
     log "  systemctl status wazuh-manager"
-    log "  systemctl status filebeat"
+    
 else
     err "Ansible playbook failed. Please check the output above for errors."
 fi

@@ -100,6 +100,9 @@ install_dependencies() {
 generate_certificates() {
     step "Generating self-signed certificates..."
     
+    # Store current directory
+    local current_dir=$(pwd)
+    
     # Create certificates directory
     mkdir -p "$CERTIFICATES_DIR"
     cd "$CERTIFICATES_DIR"
@@ -122,12 +125,7 @@ generate_certificates() {
     openssl x509 -req -in wazuh-1.csr -CA ca.crt -CAkey ca.key \
         -CAcreateserial -out wazuh-1.pem -days 3650
     
-    # Generate Filebeat certificate
-    openssl genrsa -out filebeat.key 2048
-    openssl req -new -key filebeat.key -out filebeat.csr \
-        -subj "/C=US/ST=CA/L=San Jose/O=Wazuh/OU=IT/CN=filebeat"
-    openssl x509 -req -in filebeat.csr -CA ca.crt -CAkey ca.key \
-        -CAcreateserial -out filebeat.crt -days 3650
+
     
     # Create certificates archive
     tar -czf /tmp/wazuh-certificates.tar .
@@ -135,6 +133,9 @@ generate_certificates() {
     # Set proper permissions
     chmod 600 /tmp/wazuh-certificates.tar
     chown root:root /tmp/wazuh-certificates.tar
+    
+    # Return to original directory
+    cd "$current_dir"
     
     log "Certificates generated successfully"
 }
@@ -223,6 +224,11 @@ run_ansible_deployment() {
     cd "$script_dir"
     log "Changed to directory: $(pwd)"
     
+    # Verify we're in the right place
+    if [[ ! -f "playbooks/00_setup_infra.yml" ]]; then
+        err "Failed to change to correct directory. Current: $(pwd)"
+    fi
+    
     # Run the playbook
     if ansible-playbook -i inventory/production.ini playbooks/00_setup_infra.yml --verbose; then
         log "Ansible deployment completed successfully!"
@@ -236,7 +242,7 @@ verify_deployment() {
     step "Verifying deployment..."
     
     # Check services
-    local services=("wazuh-manager" "wazuh-indexer" "wazuh-dashboard" "filebeat")
+    local services=("wazuh-manager" "wazuh-indexer" "wazuh-dashboard")
     for service in "${services[@]}"; do
         if systemctl is-active --quiet "$service"; then
             log "$service is running"
@@ -275,7 +281,6 @@ display_final_info() {
     echo "  - Wazuh Indexer: https://localhost:9200"
     echo "  - Wazuh Dashboard: https://localhost:5601"
     echo "  - Wazuh Manager: localhost:1514"
-    echo "  - Filebeat: localhost:5066"
     echo
     echo "Default credentials: admin/admin"
     echo
@@ -301,6 +306,10 @@ main() {
     echo "=========================================="
     echo
     
+    # Store the original directory where the script was called from
+    local original_dir=$(pwd)
+    log "Original working directory: $original_dir"
+    
     # Check system requirements
     check_system_requirements
     
@@ -318,6 +327,10 @@ main() {
     
     # Run Ansible deployment
     run_ansible_deployment
+    
+    # Return to original directory
+    cd "$original_dir"
+    log "Returned to original directory: $(pwd)"
     
     # Verify deployment
     verify_deployment

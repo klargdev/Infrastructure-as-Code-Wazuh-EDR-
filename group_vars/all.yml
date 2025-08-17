@@ -23,9 +23,7 @@ wazuh_indexer_password: "admin"
 wazuh_certificates_path: "/tmp/wazuh-certificates.tar"
 wazuh_certs_dir: "/etc/wazuh-certificates"
 
-# Filebeat configuration
-filebeat_config_url: "https://packages.wazuh.com/{{ wazuh_version }}/tpl/wazuh/filebeat/filebeat.yml"
-filebeat_template_url: "https://raw.githubusercontent.com/wazuh/wazuh/v{{ wazuh_version }}.0/extensions/elasticsearch/7.x/wazuh-template.json"
+# Note: Filebeat has been removed. Wazuh Agent handles log collection directly.
 
 # Wazuh manager configuration
 wazuh_manager_cluster_name: "wazuh-cluster"
@@ -57,7 +55,6 @@ wazuh_manager_service: "wazuh-manager"
 wazuh_indexer_service: "wazuh-indexer"
 wazuh_dashboard_service: "wazuh-dashboard"
 wazuh_agent_service: "wazuh-agent"
-filebeat_service: "filebeat"
 
 # Logging configuration
 wazuh_log_level: "info"

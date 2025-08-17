@@ -8,7 +8,6 @@
     daemon_reload: yes
   loop:
     - wazuh-manager
-    - filebeat
   listen: "restart wazuh services"
 
 - name: restart wazuh manager
@@ -18,9 +17,4 @@
     daemon_reload: yes
   listen: "restart wazuh manager"
 
-- name: restart filebeat
-  systemd:
-    name: filebeat
-    state: restarted
-    daemon_reload: yes
-  listen: "restart filebeat"
+

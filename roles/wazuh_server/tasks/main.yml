@@ -1,4 +1,4 @@
-# main.yml - Official single-node Wazuh Server and Filebeat installation and configuration
+# main.yml - Official single-node Wazuh Server installation and configuration
 
 - name: Ensure dependencies for repo management are installed
   apt:
@@ -28,154 +28,14 @@
     update_cache: yes
   tags: [install, server]
 
-- name: Install Wazuh manager and Filebeat
+- name: Install Wazuh manager
   apt:
-    name:
-      - wazuh-manager
-      - filebeat
+    name: wazuh-manager
     state: present
     update_cache: yes
   tags: [install, server]
-
-# --- Filebeat Configuration ---
-- name: Download preconfigured Filebeat config
-  get_url:
-    url: https://packages.wazuh.com/4.12/tpl/wazuh/filebeat/filebeat.yml
-    dest: /etc/filebeat/filebeat.yml
-    mode: '0644'
-  tags: [filebeat, server]
-
-- name: Set Filebeat hosts to Wazuh indexer
-  lineinfile:
-    path: /etc/filebeat/filebeat.yml
-    regexp: '^\s*hosts:.*'
-    line: '  hosts: ["127.0.0.1:9200"]'
-    insertafter: '^output.elasticsearch:'
-  tags: [filebeat, server]
-
-- name: Create Filebeat keystore
-  command: filebeat keystore create
-  args:
-    creates: /etc/filebeat/filebeat.keystore
-  tags: [filebeat, server]
-
-- name: Add username to Filebeat keystore
-  shell: echo admin | filebeat keystore add username --stdin --force
-  tags: [filebeat, server]
-
-- name: Add password to Filebeat keystore
-  shell: echo admin | filebeat keystore add password --stdin --force
-  tags: [filebeat, server]
-
-- name: Download Wazuh indexer alerts template
-  get_url:
-    url: https://raw.githubusercontent.com/wazuh/wazuh/v4.12.0/extensions/elasticsearch/7.x/wazuh-template.json
-    dest: /etc/filebeat/wazuh-template.json
-    mode: '0644'
-  tags: [filebeat, server]
-
-- name: Install Wazuh Filebeat module
-  shell: curl -s https://packages.wazuh.com/4.x/filebeat/wazuh-filebeat-0.4.tar.gz | tar -xvz -C /usr/share/filebeat/module
-  args:
-    creates: /usr/share/filebeat/module/wazuh
-  tags: [filebeat, server]
-
-# --- Deploy Certificates ---
-- name: Ensure /etc/filebeat/certs exists
-  file:
-    path: /etc/filebeat/certs
-    state: directory
-    owner: root
-    group: root
-    mode: '0755'
-  tags: [filebeat, server]
-
-- name: Extract certificates from wazuh-certificates.tar
-  unarchive:
-    src: /tmp/wazuh-certificates.tar
-    dest: /etc/filebeat/certs/
-    remote_src: yes
-  tags: [filebeat, server]
-
-- name: Move and set permissions for Filebeat certs
-  file:
-    src: /etc/filebeat/certs/filebeat.crt
-    dest: /etc/filebeat/certs/filebeat.crt
-    owner: root
-    group: root
-    mode: '0644'
-  tags: [filebeat, server]
-
-- name: Move and set permissions for Filebeat key
-  file:
-    src: /etc/filebeat/certs/filebeat.key
-    dest: /etc/filebeat/certs/filebeat.key
-    owner: root
-    group: root
-    mode: '0600'
-  tags: [filebeat, server]
-
-- name: Move and set permissions for CA cert
-  file:
-    src: /etc/filebeat/certs/ca.crt
-    dest: /etc/filebeat/certs/ca.crt
-    owner: root
-    group: root
-    mode: '0644'
-  tags: [filebeat, server]
 
 # --- Wazuh Manager Configuration ---
-- name: Ensure Wazuh manager is running
-  systemd:
-    name: wazuh-manager
-    enabled: yes
-    state: started
-    daemon_reload: yes
-  tags: [service, server]
-
-- name: Ensure Filebeat is running
-  systemd:
-    name: filebeat
-    enabled: yes
-    state: started
-    daemon_reload: yes
-  tags: [service, server]
-
-# --- Disable Wazuh repo after install (optional) ---
-- name: Comment out Wazuh repository
-  lineinfile:
-    path: /etc/apt/sources.list.d/wazuh.list
-    regexp: '^deb '
-    line: '#deb '
-    state: present
-    backrefs: yes
-  tags: [install, server]
-
-- name: Update apt cache after repo changes
-  apt:
-    update_cache: yes
-  tags: [install, server]
-
-# --- Wazuh Install Assistant Automated Cluster Install ---
-- name: Download Wazuh install script
-  get_url:
-    url: https://packages.wazuh.com/4.12/wazuh-install.sh
-    dest: /tmp/wazuh-install.sh
-    mode: '0755'
-  tags: [install, server]
-
-- name: Check if wazuh-install-files.tar exists
-  stat:
-    path: /tmp/wazuh-install-files.tar
-  register: wazuh_install_files
-  tags: [install, server]
-
-- name: Fail if wazuh-install-files.tar is missing
-  fail:
-    msg: "wazuh-install-files.tar is required in /tmp before installation."
-  when: not wazuh_install_files.stat.exists
-  tags: [install, server]
-
 - name: Run Wazuh installation script
   command: bash /tmp/wazuh-install.sh --wazuh-server wazuh-1
   args:
@@ -255,23 +115,9 @@
     enabled: yes
   tags: [service, server]
 
-- name: Start Filebeat service
-  systemd:
-    name: filebeat
-    state: started
-    enabled: yes
-  tags: [service, server]
-
 - name: Wait for Wazuh manager to be ready
   wait_for:
     port: 1514
     host: 127.0.0.1
     timeout: 60
-  tags: [service, server]
-
-- name: Wait for Filebeat to be ready
-  wait_for:
-    port: 5066
-    host: 127.0.0.1
-    timeout: 30
   tags: [service, server]
