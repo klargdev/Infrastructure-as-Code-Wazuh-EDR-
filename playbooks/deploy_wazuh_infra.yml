@@ -1,6 +1,7 @@
 ---
 - name: Deploy Wazuh EDR Full Stack
   hosts: all
+  connection: local
   become: yes
   vars_files:
     - ../group_vars/all.yml
