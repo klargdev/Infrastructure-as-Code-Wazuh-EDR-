@@ -20,6 +20,15 @@
     update_cache: yes
   tags: [install, server]
 
+- name: Ensure /var/ossec/etc exists
+  file:
+    path: /var/ossec/etc
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  tags: [config, server]
+
 - name: Ensure xmllint is installed for XML validation
   apt:
     name: libxml2-utils
