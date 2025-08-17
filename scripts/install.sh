@@ -33,4 +33,20 @@ cd ..
 log "Generating initial dynamic inventory..."
 python3 inventory/auto-generator.py || err "Inventory generation failed."
 
-log "Bootstrap complete! Access Semaphore UI at http://localhost:3000"
+
+# Wait for Semaphore to be up
+log "Waiting for Semaphore to start..."
+until curl -s http://localhost:3000 >/dev/null; do sleep 2; done
+
+# Create admin user, project, inventory, and template using Semaphore CLI
+log "Configuring Semaphore for one-click Wazuh EDR deployment..."
+docker exec semaphore semaphore user add --admin --login admin --name "Admin" --email admin@localhost --password changeme || true
+docker exec semaphore semaphore project add --name "IaC EDR" || true
+docker exec semaphore semaphore inventory add --project 1 --name "Dynamic Inventory" --type plugin --inventory /inventory/auto-generator.py || true
+docker exec semaphore semaphore template add --project 1 --name "Deploy Full Stack" --playbook /playbooks/00_setup_infra.yml --inventory 1 || true
+
+# Trigger the playbook run (deploy Wazuh EDR stack)
+docker exec semaphore semaphore task add --template 1 --environment 1 --inventory 1 --project 1 || true
+
+log "Bootstrap complete! Semaphore and Wazuh EDR stack are fully deployed and ready!"
+log "Access the Semaphore UI at http://localhost:3000"

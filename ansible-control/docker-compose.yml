@@ -12,6 +12,7 @@ services:
       SEMAPHORE_ADMIN_NAME: "admin"
       SEMAPHORE_ADMIN_EMAIL: "admin@localhost"
       SEMAPHORE_ADMIN: "admin"
+      SEMAPHORE_PROJECT_NAME: "IaC EDR"
     volumes:
       - semaphore_data:/etc/semaphore
       - ../playbooks:/playbooks:ro
