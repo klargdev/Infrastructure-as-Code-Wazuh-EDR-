@@ -13,6 +13,27 @@
     state: present
     reload: yes
 
+- name: Check if UFW is active
+  command: ufw status
+  register: ufw_status
+  changed_when: false
+  failed_when: false
+
+- name: Allow required ports via UFW if active (Indexer/Server/Dashboard)
+  shell: |
+    ufw allow 9200/tcp
+    ufw allow 9300/tcp
+    ufw allow 5601/tcp
+    ufw allow 443/tcp
+    ufw allow 1514/tcp
+    ufw allow 1514/udp
+    ufw allow 1515/tcp
+    ufw allow 1516/tcp
+    ufw allow 55000/tcp
+  when: ufw_status.stdout is search('Status: active')
+  args:
+    warn: false
+
 - name: Create working directory
   file:
     path: /tmp/wazuh-assist
@@ -52,6 +73,17 @@
   args:
     chdir: /tmp/wazuh-assist
 
+- name: Wait for Wazuh Indexer (port 9200)
+  wait_for:
+    host: 127.0.0.1
+    port: 9200
+    timeout: 120
+
+- name: Initialize Wazuh indexer cluster (run once)
+  command: bash wazuh-install.sh --start-cluster
+  args:
+    chdir: /tmp/wazuh-assist
+
 - name: Install Wazuh server (manager) using --wazuh-server (preferred)
   command: bash wazuh-install.sh --wazuh-server wazuh-1 {{ '-o' if wazuh_assisted_overwrite | bool else '' }}
   args:
@@ -67,11 +99,6 @@
 
 - name: Install Wazuh dashboard
   command: bash wazuh-install.sh --wazuh-dashboard dashboard {{ '-o' if wazuh_assisted_overwrite | bool else '' }}
-  args:
-    chdir: /tmp/wazuh-assist
-
-- name: Initialize Wazuh indexer cluster (run once)
-  command: bash wazuh-install.sh --start-cluster
   args:
     chdir: /tmp/wazuh-assist
 
