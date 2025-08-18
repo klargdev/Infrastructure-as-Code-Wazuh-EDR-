@@ -25,11 +25,29 @@
     dest: /tmp/wazuh-assist/wazuh-install.sh
     mode: '0755'
 
-- name: Render assisted install config.yml (single-node all-in-one)
-  template:
-    src: config.yml.j2
+- name: Download official assisted install config.yml
+  get_url:
+    url: https://packages.wazuh.com/4.12/config.yml
     dest: /tmp/wazuh-assist/config.yml
     mode: '0644'
+
+- name: Set indexer IP in config.yml
+  replace:
+    path: /tmp/wazuh-assist/config.yml
+    regexp: 'ip:\s*"<indexer-node-ip>"'
+    replace: 'ip: "{{ wazuh_host_ip_effective }}"'
+
+- name: Set server IP in config.yml
+  replace:
+    path: /tmp/wazuh-assist/config.yml
+    regexp: 'ip:\s*"<wazuh-manager-ip>"'
+    replace: 'ip: "{{ wazuh_host_ip_effective }}"'
+
+- name: Set dashboard IP in config.yml
+  replace:
+    path: /tmp/wazuh-assist/config.yml
+    regexp: 'ip:\s*"<dashboard-node-ip>"'
+    replace: 'ip: "{{ wazuh_host_ip_effective }}"'
 
 - name: Generate cluster key, certs and passwords (idempotent)
   command: bash wazuh-install.sh --generate-config-files
