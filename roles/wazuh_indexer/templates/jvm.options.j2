@@ -1,4 +1,4 @@
-# JVM options for Wazuh Indexer - Conservative settings for stability
+# JVM options for Wazuh Indexer - Conservative settings for stability (Java 17+ compatible)
 -Xms{{ wazuh_indexer_heap_size | default('256m') }}
 -Xmx{{ wazuh_indexer_heap_size | default('256m') }}
 
@@ -24,10 +24,8 @@
 -Dio.netty.allocator.type=pooled
 -Dio.netty.allocator.numDirectArenas=0
 
-# Error handling and debugging - Reduced for production stability
+# Error handling and debugging - Java 17+ compatible options only
 -XX:+PrintGCDetails
--XX:+PrintGCTimeStamps
--XX:+PrintGCDateStamps
 -Xloggc:/var/log/wazuh-indexer/gc.log
 -XX:+UseGCLogFileRotation
 -XX:NumberOfGCLogFiles=5

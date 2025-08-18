@@ -1,0 +1,11 @@
+# Minimal JVM options for testing - Java 17+ compatible
+-Xms256m
+-Xmx256m
+
+# Essential GC settings
+-XX:+UseG1GC
+-server
+
+# Basic settings
+-Djava.awt.headless=true
+-Dfile.encoding=UTF-8
