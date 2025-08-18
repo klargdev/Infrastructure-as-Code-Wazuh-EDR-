@@ -1,0 +1,4 @@
+---
+# Overwrite existing Wazuh components if previously installed/partially installed
+wazuh_assisted_overwrite: false
+

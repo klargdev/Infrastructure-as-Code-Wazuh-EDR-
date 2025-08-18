@@ -48,25 +48,25 @@
   when: not wazuh_files_tar.stat.exists
 
 - name: Install Wazuh indexer (node-1)
-  command: bash wazuh-install.sh --wazuh-indexer node-1
+  command: bash wazuh-install.sh --wazuh-indexer node-1 {{ '-o' if wazuh_assisted_overwrite | bool else '' }}
   args:
     chdir: /tmp/wazuh-assist
 
 - name: Install Wazuh server (manager) using --wazuh-server (preferred)
-  command: bash wazuh-install.sh --wazuh-server wazuh-1
+  command: bash wazuh-install.sh --wazuh-server wazuh-1 {{ '-o' if wazuh_assisted_overwrite | bool else '' }}
   args:
     chdir: /tmp/wazuh-assist
   register: install_server_try1
   failed_when: false
 
 - name: Install Wazuh manager using legacy flag --wazuh-manager (fallback)
-  command: bash wazuh-install.sh --wazuh-manager wazuh-1
+  command: bash wazuh-install.sh --wazuh-manager wazuh-1 {{ '-o' if wazuh_assisted_overwrite | bool else '' }}
   args:
     chdir: /tmp/wazuh-assist
   when: install_server_try1.rc != 0
 
 - name: Install Wazuh dashboard
-  command: bash wazuh-install.sh --wazuh-dashboard dashboard
+  command: bash wazuh-install.sh --wazuh-dashboard dashboard {{ '-o' if wazuh_assisted_overwrite | bool else '' }}
   args:
     chdir: /tmp/wazuh-assist
 
