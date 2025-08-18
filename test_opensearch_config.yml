@@ -1,23 +1,12 @@
-# OpenSearch configuration for Wazuh Indexer
-cluster.name: {{ wazuh_indexer_cluster_name | default('wazuh-cluster') }}
-node.name: {{ wazuh_indexer_node_name | default('wazuh-indexer-1') }}
+# Test OpenSearch configuration for troubleshooting
+cluster.name: wazuh-cluster
+node.name: wazuh-indexer-1
 
 # Network settings
-network.host: {{ wazuh_indexer_network_host | default('0.0.0.0') }}
-http.port: {{ wazuh_indexer_http_port | default(9200) }}
-transport.port: {{ wazuh_indexer_transport_port | default(9300) }}
+network.host: 0.0.0.0
+http.port: 9200
+transport.port: 9300
 
-# Security settings
-{% if (wazuh_ssl_enabled | default(false)) %}
-plugins.security.ssl.http.enabled: true
-plugins.security.ssl.transport.enabled: true
-plugins.security.ssl.http.pemcert_filepath: {{ wazuh_ssl_cert | default('/etc/wazuh-indexer/certs/wazuh-1.pem') }}
-plugins.security.ssl.http.pemkey_filepath: {{ wazuh_ssl_key | default('/etc/wazuh-indexer/certs/wazuh-1-key.pem') }}
-plugins.security.ssl.transport.pemcert_filepath: {{ wazuh_ssl_cert | default('/etc/wazuh-indexer/certs/wazuh-1.pem') }}
-plugins.security.ssl.transport.pemkey_filepath: {{ wazuh_ssl_key | default('/etc/wazuh-indexer/certs/wazuh-1-key.pem') }}
-plugins.security.ssl.transport.pemtrustedcas_filepath: {{ wazuh_ssl_ca | default('/etc/wazuh-indexer/certs/ca.crt') }}
-plugins.security.ssl.http.pemtrustedcas_filepath: {{ wazuh_ssl_ca | default('/etc/wazuh-indexer/certs/ca.crt') }}
-{% else %}
 # SSL is disabled - provide empty paths to satisfy plugin requirements
 plugins.security.ssl.http.enabled: false
 plugins.security.ssl.transport.enabled: false
@@ -27,7 +16,6 @@ plugins.security.ssl.transport.pemcert_filepath: ""
 plugins.security.ssl.transport.pemkey_filepath: ""
 plugins.security.ssl.transport.pemtrustedcas_filepath: ""
 plugins.security.ssl.http.pemtrustedcas_filepath: ""
-{% endif %}
 
 # Performance settings
 bootstrap.memory_lock: false
