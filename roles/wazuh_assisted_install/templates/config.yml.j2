@@ -1,0 +1,14 @@
+nodes:
+  indexer:
+    - name: node-1
+      ip: "{{ wazuh_host_ip | default(wazuh_host_ip_effective) }}"
+
+  server:
+    - name: wazuh-1
+      ip: "{{ wazuh_host_ip | default(wazuh_host_ip_effective) }}"
+
+  dashboard:
+    - name: dashboard
+      ip: "{{ wazuh_host_ip | default(wazuh_host_ip_effective) }}"
+
+

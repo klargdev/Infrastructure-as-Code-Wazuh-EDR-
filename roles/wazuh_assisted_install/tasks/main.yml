@@ -1,0 +1,102 @@
+---
+- name: Gather facts
+  setup:
+
+- name: Determine host IP
+  set_fact:
+    wazuh_host_ip_effective: "{{ wazuh_host_ip | default(ansible_default_ipv4.address | default('127.0.0.1')) }}"
+
+- name: Ensure vm.max_map_count is set (required by OpenSearch)
+  sysctl:
+    name: vm.max_map_count
+    value: "262144"
+    state: present
+    reload: yes
+
+- name: Create working directory
+  file:
+    path: /tmp/wazuh-assist
+    state: directory
+    mode: '0755'
+
+- name: Download Wazuh installation assistant
+  get_url:
+    url: https://packages.wazuh.com/4.12/wazuh-install.sh
+    dest: /tmp/wazuh-assist/wazuh-install.sh
+    mode: '0755'
+
+- name: Render assisted install config.yml (single-node all-in-one)
+  template:
+    src: config.yml.j2
+    dest: /tmp/wazuh-assist/config.yml
+    mode: '0644'
+
+- name: Generate cluster key, certs and passwords (idempotent)
+  command: bash wazuh-install.sh --generate-config-files
+  args:
+    chdir: /tmp/wazuh-assist
+    creates: /tmp/wazuh-assist/wazuh-install-files.tar
+
+- name: Ensure wazuh-install-files.tar present in working dir
+  stat:
+    path: /tmp/wazuh-assist/wazuh-install-files.tar
+  register: wazuh_files_tar
+
+- name: Fail if wazuh-install-files.tar is missing
+  fail:
+    msg: "wazuh-install-files.tar not found after generation"
+  when: not wazuh_files_tar.stat.exists
+
+- name: Install Wazuh indexer (node-1)
+  command: bash wazuh-install.sh --wazuh-indexer node-1
+  args:
+    chdir: /tmp/wazuh-assist
+
+- name: Install Wazuh server (manager) using --wazuh-server (preferred)
+  command: bash wazuh-install.sh --wazuh-server wazuh-1
+  args:
+    chdir: /tmp/wazuh-assist
+  register: install_server_try1
+  failed_when: false
+
+- name: Install Wazuh manager using legacy flag --wazuh-manager (fallback)
+  command: bash wazuh-install.sh --wazuh-manager wazuh-1
+  args:
+    chdir: /tmp/wazuh-assist
+  when: install_server_try1.rc != 0
+
+- name: Install Wazuh dashboard
+  command: bash wazuh-install.sh --wazuh-dashboard dashboard
+  args:
+    chdir: /tmp/wazuh-assist
+
+- name: Initialize Wazuh indexer cluster (run once)
+  command: bash wazuh-install.sh --start-cluster
+  args:
+    chdir: /tmp/wazuh-assist
+
+- name: Retrieve admin password
+  shell: |
+    set -o pipefail
+    tar -axf /tmp/wazuh-assist/wazuh-install-files.tar wazuh-install-files/wazuh-passwords.txt -O | grep -P "'admin'" -A 1 | tail -n1 | awk '{print $2}'
+  args:
+    executable: /bin/bash
+  register: wazuh_admin_password
+  changed_when: false
+
+- name: Show access details
+  debug:
+    msg: |
+      Wazuh all-in-one deployed.
+      Dashboard URL: https://{{ wazuh_host_ip_effective }}:5601
+      Indexer URL:   https://{{ wazuh_host_ip_effective }}:9200
+      Username:      admin
+      Password:      {{ wazuh_admin_password.stdout | default('UNKNOWN') }}
+
+- name: Optionally disable Wazuh repo updates (if present)
+  command: sed -i "s/^deb /#deb /" /etc/apt/sources.list.d/wazuh.list
+  register: disable_repo
+  failed_when: false
+  changed_when: disable_repo.rc == 0
+
+

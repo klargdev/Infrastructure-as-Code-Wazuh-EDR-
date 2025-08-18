@@ -1,0 +1,11 @@
+---
+- name: Deploy Wazuh all-in-one (assisted installer)
+  hosts: wazuh_indexer
+  become: yes
+  vars:
+    # Optionally override this in inventory/host_vars
+    wazuh_host_ip: "{{ hostvars[inventory_hostname].ansible_host | default('') }}"
+  roles:
+    - wazuh_assisted_install
+
+
