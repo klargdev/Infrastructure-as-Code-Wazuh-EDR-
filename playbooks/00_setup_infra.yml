@@ -16,6 +16,7 @@
     wazuh_indexer_transport_port: 9300
     wazuh_indexer_heap_size: "1g"
     # SSL configuration
+    wazuh_ssl_enabled: true
     wazuh_ssl_cert: "/etc/wazuh-certificates/wazuh-1.pem"
     wazuh_ssl_key: "/etc/wazuh-certificates/wazuh-1-key.pem"
     wazuh_ssl_ca: "/etc/wazuh-certificates/ca.crt"

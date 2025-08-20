@@ -27,9 +27,9 @@
 # Error handling and debugging - Java 17+ compatible options only
 -XX:+PrintGCDetails
 -Xloggc:/var/log/wazuh-indexer/gc.log
--XX:+UseGCLogFileRotation
--XX:NumberOfGCLogFiles=5
--XX:GCLogFileSize=50M
+#-XX:+UseGCLogFileRotation
+#-XX:NumberOfGCLogFiles=5
+#-XX:GCLogFileSize=50M
 
 # Memory management - Conservative settings
 -XX:+UseStringDeduplication
