@@ -59,7 +59,6 @@
     src: config.yml.j2
     dest: /tmp/config.yml
     mode: '0644'
-  tags: [certs, indexer]
 
 - name: Generate Wazuh certificates
   command: bash /tmp/wazuh-certs-tool.sh -A -i /tmp/config.yml
