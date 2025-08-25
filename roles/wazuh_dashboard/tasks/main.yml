@@ -1,15 +1,37 @@
-# main.yml - Wazuh Dashboard (Kibana) installation and configuration
 
-- name: Add Wazuh Dashboard GPG key
-  apt_key:
-    url: https://packages.wazuh.com/key/GPG-KEY-WAZUH
+# --- Ensure required packages are installed ---
+- name: Install required system packages
+  apt:
+    name:
+      - debhelper
+      - tar
+      - curl
+      - libcap2-bin
+      - gnupg
+      - apt-transport-https
     state: present
+    update_cache: yes
   tags: [install, dashboard]
 
-- name: Add Wazuh Dashboard repository
-  apt_repository:
-    repo: 'deb https://packages.wazuh.com/4.x/apt/ stable main'
-    state: present
+# --- Add Wazuh GPG key using official keyring method ---
+- name: Download and import Wazuh GPG key
+  shell: |
+    curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | \
+      gpg --no-default-keyring --keyring gnupg-ring:/usr/share/keyrings/wazuh.gpg --import && \
+      chmod 644 /usr/share/keyrings/wazuh.gpg
+  args:
+    creates: /usr/share/keyrings/wazuh.gpg
+  tags: [install, dashboard]
+
+# --- Add Wazuh repository using signed-by ---
+- name: Add Wazuh Dashboard repository (official method)
+  copy:
+    dest: /etc/apt/sources.list.d/wazuh.list
+    content: |
+      deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main
+    owner: root
+    group: root
+    mode: '0644'
   tags: [install, dashboard]
 
 - name: Update apt cache
@@ -17,6 +39,7 @@
     update_cache: yes
   tags: [install, dashboard]
 
+# --- Install Wazuh Dashboard ---
 - name: Install Wazuh Dashboard
   apt:
     name: wazuh-dashboard
@@ -24,15 +47,41 @@
     update_cache: yes
   tags: [install, dashboard]
 
-- name: Create Wazuh Dashboard configuration directory
+# --- Certificate Deployment (official method) ---
+- name: Ensure wazuh-certificates.tar is present
+  stat:
+    path: /tmp/wazuh-certificates.tar
+  register: dashboard_cert_tar
+  tags: [certs, dashboard]
+
+- name: Fail if wazuh-certificates.tar is missing
+  fail:
+    msg: "wazuh-certificates.tar is missing in /tmp. Please copy it from the certificate generation step."
+  when: not dashboard_cert_tar.stat.exists
+  tags: [certs, dashboard]
+
+- name: Create certificates directory for dashboard
   file:
-    path: /etc/wazuh-dashboard
+    path: /etc/wazuh-dashboard/certs
     state: directory
     owner: wazuh-dashboard
     group: wazuh-dashboard
     mode: '0755'
-  tags: [config, dashboard]
+  tags: [certs, dashboard]
 
+- name: Extract and move dashboard certificates (official method)
+  shell: |
+    tar -xf /tmp/wazuh-certificates.tar -C /etc/wazuh-dashboard/certs/ ./dashboard.pem ./dashboard-key.pem ./root-ca.pem || true
+    mv -n /etc/wazuh-dashboard/certs/dashboard.pem /etc/wazuh-dashboard/certs/dashboard.pem
+    mv -n /etc/wazuh-dashboard/certs/dashboard-key.pem /etc/wazuh-dashboard/certs/dashboard-key.pem
+    chmod 500 /etc/wazuh-dashboard/certs
+    chmod 400 /etc/wazuh-dashboard/certs/*
+    chown -R wazuh-dashboard:wazuh-dashboard /etc/wazuh-dashboard/certs
+  args:
+    executable: /bin/bash
+  tags: [certs, dashboard]
+
+# --- Dashboard Configuration ---
 - name: Deploy Wazuh Dashboard configuration
   template:
     src: opensearch_dashboards.yml.j2
@@ -43,23 +92,31 @@
   notify: restart wazuh dashboard
   tags: [config, dashboard]
 
-- name: Create certificates directory
-  file:
-    path: /etc/wazuh-dashboard/certs
-    state: directory
-    owner: wazuh-dashboard
-    group: wazuh-dashboard
-    mode: '0755'
-  tags: [config, dashboard]
+# --- Start and enable Wazuh Dashboard service ---
+- name: Enable and start Wazuh Dashboard service
+  systemd:
+    name: wazuh-dashboard
+    enabled: yes
+    state: started
+    daemon_reload: yes
+  tags: [service, dashboard]
 
-- name: Extract certificates
-  unarchive:
-    src: /tmp/wazuh-certificates.tar
-    dest: /etc/wazuh-dashboard/certs/
-    remote_src: yes
-    owner: wazuh-dashboard
-    group: wazuh-dashboard
-  tags: [config, dashboard]
+# --- Wait for Wazuh Dashboard to be ready ---
+- name: Wait for Wazuh Dashboard to be ready
+  wait_for:
+    port: 5601
+    host: 127.0.0.1
+    timeout: 120
+  tags: [service, dashboard]
+
+# --- Optionally disable Wazuh repo after install for security ---
+- name: Disable Wazuh repository after install (recommended)
+  lineinfile:
+    path: /etc/apt/sources.list.d/wazuh.list
+    regexp: '^deb '
+    line: '#deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main'
+    state: present
+  tags: [install, dashboard]
 
 - name: Set proper permissions for certificates
   file:

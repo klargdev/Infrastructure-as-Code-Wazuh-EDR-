@@ -1,8 +1,0 @@
-# handlers/main.yml - Handlers for Wazuh Agents role
-
-- name: restart wazuh agent
-  systemd:
-    name: wazuh-agent
-    state: restarted
-    daemon_reload: yes
-  listen: "restart wazuh agent"

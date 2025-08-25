@@ -1,86 +1,28 @@
-# group_vars/all.yml - Global variables for Wazuh EDR deployment
-
-# Wazuh version and repository configuration
+# group_vars/all.yml - Cleaned for single-node, official Wazuh EDR automation
 wazuh_version: "4.12"
-wazuh_repo_url: "https://packages.wazuh.com/4.x/apt/stable"
 wazuh_gpg_key: "https://packages.wazuh.com/key/GPG-KEY-WAZUH"
+wazuh_repo_url: "https://packages.wazuh.com/4.x/apt/"
 
-# Network configuration
+# Node/host config (localhost only)
+wazuh_manager_node_name: "wazuh-1"
+wazuh_indexer_node_name: "node-1"
+wazuh_dashboard_node_name: "dashboard"
 
-# Use Ansible facts for dynamic IP detection
-wazuh_manager_host: "{{ ansible_default_ipv4.address }}"
+# Service ports
 wazuh_manager_port: 1514
-wazuh_indexer_host: "{{ ansible_default_ipv4.address }}"
 wazuh_indexer_port: 9200
-wazuh_dashboard_host: "{{ ansible_default_ipv4.address }}"
-wazuh_dashboard_port: 5601
+wazuh_dashboard_port: 443
 
-# Authentication credentials
+# Credentials (default, change after install)
 wazuh_admin_user: "admin"
 wazuh_admin_password: "admin"
 wazuh_indexer_user: "admin"
 wazuh_indexer_password: "admin"
 
-# Certificate configuration
-wazuh_certificates_path: "/tmp/wazuh-certificates.tar"
-wazuh_certs_dir: "/etc/wazuh-certificates"
+# Certs
+wazuh_certificates_tar: "/tmp/wazuh-certificates.tar"
 
-# Note: Filebeat has been removed. Wazuh Agent handles log collection directly.
-
-# Wazuh manager configuration
-wazuh_manager_cluster_name: "wazuh-cluster"
-wazuh_manager_node_name: "wazuh-1"
-wazuh_manager_email_alert: false
-wazuh_manager_syscheck_frequency: 43200
-wazuh_manager_rootcheck_frequency: 43200
-
-# Wazuh indexer configuration
-wazuh_indexer_cluster_name: "wazuh-cluster"
-wazuh_indexer_node_name: "wazuh-indexer-1"
-wazuh_indexer_network_host: "0.0.0.0"
-wazuh_indexer_http_port: 9200
-wazuh_indexer_transport_port: 9300
-
-# Wazuh dashboard configuration
-wazuh_dashboard_server_host: "0.0.0.0"
-wazuh_dashboard_server_port: 5601
-wazuh_dashboard_opensearch_hosts: [ "https://{{ wazuh_indexer_host }}:{{ wazuh_indexer_port }}" ]
-wazuh_dashboard_opensearch_ssl_verify: false
-
-# System configuration
+# System
 ansible_python_interpreter: "/usr/bin/python3"
 ansible_become: true
 ansible_become_method: sudo
-
-# Service configuration
-wazuh_manager_service: "wazuh-manager"
-wazuh_indexer_service: "wazuh-indexer"
-wazuh_dashboard_service: "wazuh-dashboard"
-wazuh_agent_service: "wazuh-agent"
-
-# Logging configuration
-wazuh_log_level: "info"
-wazuh_log_format: "default"
-
-# Performance tuning - Very conservative settings for stability
-wazuh_indexer_heap_size: "256m"
-wazuh_indexer_max_open_files: 65535
-wazuh_indexer_max_locked_memory: "unlimited"
-
-# System kernel parameters
-wazuh_vm_max_map_count: 262144
-
-# Security configuration - Disable SSL for initial deployment
-wazuh_ssl_enabled: false
-wazuh_ssl_cert: "{{ wazuh_certs_dir }}/wazuh-1.pem"
-wazuh_ssl_key: "{{ wazuh_certs_dir }}/wazuh-1-key.pem"
-wazuh_ssl_ca: "{{ wazuh_certs_dir }}/ca.crt"
-
-# Backup configuration
-wazuh_backup_enabled: true
-wazuh_backup_path: "/var/backups/wazuh"
-wazuh_backup_retention_days: 30
-
-# Monitoring configuration
-wazuh_monitoring_enabled: true
-wazuh_monitoring_interval: 60

@@ -1,0 +1,25 @@
+# Jinja2 template for Wazuh cert tool config.yml
+# This template is rendered by Ansible and used by wazuh-certs-tool.sh
+
+# Root CA section
+global:
+  ca:
+    days: 3650
+    country: US
+    state: Localhost
+    locality: Localhost
+    organization: Wazuh
+    organizational_unit: Security
+    common_name: Wazuh Root CA
+    email: admin@localhost
+
+# Nodes section
+nodes:
+  - name: "{{ wazuh_indexer_node_name | default('node-1') }}"
+    ip: "{{ ansible_default_ipv4.address | default('127.0.0.1') }}"
+    roles: ["indexer"]
+
+# Admin cert section
+admin:
+  name: admin
+  email: admin@localhost

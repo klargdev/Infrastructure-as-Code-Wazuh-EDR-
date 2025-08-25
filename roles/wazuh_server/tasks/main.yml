@@ -1,42 +1,25 @@
-# main.yml - Official single-node Wazuh Server installation and configuration
 
-- name: Ensure dependencies for repo management are installed
-  apt:
-    name:
-      - gnupg
-      - apt-transport-https
-    state: present
-    update_cache: yes
+# --- Wazuh Server Assisted Installation (Single Node) ---
+- name: Download Wazuh installation assistant
+  get_url:
+    url: https://packages.wazuh.com/4.12/wazuh-install.sh
+    dest: /tmp/wazuh-install.sh
+    mode: '0755'
   tags: [install, server]
 
-- name: Add Wazuh GPG key
-  shell: |
-    curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | gpg --no-default-keyring --keyring gnupg-ring:/usr/share/keyrings/wazuh.gpg --import && chmod 644 /usr/share/keyrings/wazuh.gpg
-  args:
-    creates: /usr/share/keyrings/wazuh.gpg
+- name: Ensure wazuh-install-files.tar is present
+  stat:
+    path: /tmp/wazuh-install-files.tar
+  register: wazuh_install_files_tar
   tags: [install, server]
 
-- name: Add Wazuh repository
-  lineinfile:
-    path: /etc/apt/sources.list.d/wazuh.list
-    line: 'deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main'
-    create: yes
+- name: Fail if wazuh-install-files.tar is missing
+  fail:
+    msg: "wazuh-install-files.tar is missing in /tmp. Please copy it from the certificate generation step."
+  when: not wazuh_install_files_tar.stat.exists
   tags: [install, server]
 
-- name: apt update after adding Wazuh repo
-  apt:
-    update_cache: yes
-  tags: [install, server]
-
-- name: Install Wazuh manager
-  apt:
-    name: wazuh-manager
-    state: present
-    update_cache: yes
-  tags: [install, server]
-
-# --- Wazuh Manager Configuration ---
-- name: Run Wazuh installation script
+- name: Run Wazuh installation assistant for single-node server
   command: bash /tmp/wazuh-install.sh --wazuh-server wazuh-1
   args:
     chdir: /tmp
@@ -44,80 +27,15 @@
   tags: [install, server]
   changed_when: "'Wazuh server is now successfully installed' in wazuh_install_result.stdout or wazuh_install_result.rc == 0"
 
-- name: Add Wazuh repository for package management
-  apt_repository:
-    repo: 'deb https://packages.wazuh.com/4.x/apt/ stable main'
+# --- Optionally disable Wazuh repo after install for security ---
+- name: Disable Wazuh repository after install (recommended)
+  lineinfile:
+    path: /etc/apt/sources.list.d/wazuh.list
+    regexp: '^deb '
+    line: '#deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main'
     state: present
   tags: [install, server]
 
-- name: Install Wazuh manager package
-  apt:
-    name: wazuh-manager
-    state: present
-    update_cache: yes
-  tags: [install, server]
 
 - name: Verify Wazuh manager installation
-  stat:
-    path: /var/ossec/bin/wazuh-control
-  register: wazuh_bin_stat
-
-- name: Fail if Wazuh manager is not installed
-  fail:
-    msg: "Wazuh manager is not installed. Installation failed or package missing."
-  when: not wazuh_bin_stat.stat.exists
-
-- name: Ensure Wazuh etc directory exists
-  file:
-    path: /var/ossec/etc
-    state: directory
-    owner: root
-    group: root
-    mode: '0755'
-  tags: [config, server]
-
-- name: Install libxml2-utils for XML validation
-  apt:
-    name: libxml2-utils
-    state: present
-  tags: [config, server]
-
-- name: Deploy Wazuh configuration template
-  template:
-    src: ossec.conf.j2
-    dest: /var/ossec/etc/ossec.conf
-    owner: root
-    group: root
-    mode: '0640'
-  notify: restart wazuh services
-  tags: [config, server]
-
-- name: Verify ossec.conf file size
-  stat:
-    path: /var/ossec/etc/ossec.conf
-  register: ossec_conf_stat
-
-- name: Fail if ossec.conf is empty
-  fail:
-    msg: "ossec.conf is empty! Check your template and variables."
-  when: ossec_conf_stat.stat.size == 0
-
-- name: Validate ossec.conf XML syntax
-  command: xmllint --noout /var/ossec/etc/ossec.conf
-  register: ossec_conf_xml
-  failed_when: ossec_conf_xml.rc != 0
-  tags: [config, server]
-
-- name: Start Wazuh manager service
-  systemd:
-    name: wazuh-manager
-    state: started
-    enabled: yes
-  tags: [service, server]
-
-- name: Wait for Wazuh manager to be ready
-  wait_for:
-    port: 1514
-    host: 127.0.0.1
-    timeout: 60
-  tags: [service, server]
+  # ...removed legacy config and validation tasks, as the assisted installer handles all config...

@@ -42,7 +42,7 @@
     - wazuh_indexer
     - wazuh_server
     - wazuh_dashboard
-    - wazuh_agents
+  # - wazuh_agents
   tags: [core, all]
 
   handlers:
