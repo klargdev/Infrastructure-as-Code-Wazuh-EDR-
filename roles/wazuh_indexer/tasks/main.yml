@@ -10,7 +10,6 @@
       - apt-transport-https
     state: present
     update_cache: yes
-  tags: [install, indexer]
 
 # --- Add Wazuh GPG key using official keyring method ---
 - name: Download and import Wazuh GPG key
@@ -20,7 +19,6 @@
       chmod 644 /usr/share/keyrings/wazuh.gpg
   args:
     creates: /usr/share/keyrings/wazuh.gpg
-  tags: [install, indexer]
 
 # --- Add Wazuh repository using signed-by ---
 - name: Add Wazuh Indexer repository (official method)
@@ -31,12 +29,10 @@
     owner: root
     group: root
     mode: '0644'
-  tags: [install, indexer]
 
 - name: Update apt cache
   apt:
     update_cache: yes
-  tags: [install, indexer]
 
 # --- Install Wazuh Indexer ---
 - name: Install Wazuh Indexer
@@ -44,7 +40,6 @@
     name: wazuh-indexer
     state: present
     update_cache: yes
-  tags: [install, indexer]
 
 # --- Certificate Generation (Wazuh Certs Tool) ---
 - name: Download wazuh-certs-tool.sh
@@ -52,9 +47,8 @@
     url: https://packages.wazuh.com/4.12/wazuh-certs-tool.sh
     dest: /tmp/wazuh-certs-tool.sh
     mode: '0755'
-  tags: [certs, indexer]
 
-- name: Render config.yml for certs tool
+- name: Render config.yml for certs tool (always runs)
   template:
     src: config.yml.j2
     dest: /tmp/config.yml
@@ -64,7 +58,6 @@
   command: bash /tmp/wazuh-certs-tool.sh -A -i /tmp/config.yml
   args:
     chdir: /tmp
-  tags: [certs, indexer]
 
 - name: Create certificates directory for indexer
   file:
@@ -73,7 +66,6 @@
     owner: wazuh-indexer
     group: wazuh-indexer
     mode: '0755'
-  tags: [certs, indexer]
 
 - name: Move and rename node certificate and key to indexer certs dir
   shell: |
@@ -87,17 +79,14 @@
     chown -R wazuh-indexer:wazuh-indexer /etc/wazuh-indexer/certs
   args:
     executable: /bin/bash
-  tags: [certs, indexer]
 
 - name: Remove wazuh-certificates.tar for security
   file:
     path: /tmp/wazuh-certificates.tar
     state: absent
-  tags: [certs, indexer]
 
 # --- Cluster initialization ---
 - name: Initialize Wazuh Indexer cluster
   command: /usr/share/wazuh-indexer/bin/indexer-security-init.sh
-  tags: [init, indexer]
 
 
