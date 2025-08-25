@@ -3,8 +3,6 @@
   hosts: all
   connection: local
   become: yes
-  vars_files:
-    - group_vars/all.yml
   roles:
     - wazuh_indexer
     - wazuh_server
