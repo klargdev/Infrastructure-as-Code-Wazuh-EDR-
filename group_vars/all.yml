@@ -6,11 +6,13 @@ wazuh_repo_url: "https://packages.wazuh.com/4.x/apt/stable"
 wazuh_gpg_key: "https://packages.wazuh.com/key/GPG-KEY-WAZUH"
 
 # Network configuration
-wazuh_manager_host: "127.0.0.1"
+
+# Use Ansible facts for dynamic IP detection
+wazuh_manager_host: "{{ ansible_default_ipv4.address }}"
 wazuh_manager_port: 1514
-wazuh_indexer_host: "127.0.0.1"
+wazuh_indexer_host: "{{ ansible_default_ipv4.address }}"
 wazuh_indexer_port: 9200
-wazuh_dashboard_host: "127.0.0.1"
+wazuh_dashboard_host: "{{ ansible_default_ipv4.address }}"
 wazuh_dashboard_port: 5601
 
 # Authentication credentials
@@ -42,7 +44,7 @@ wazuh_indexer_transport_port: 9300
 # Wazuh dashboard configuration
 wazuh_dashboard_server_host: "0.0.0.0"
 wazuh_dashboard_server_port: 5601
-wazuh_dashboard_opensearch_hosts: ["https://{{ wazuh_indexer_host }}:{{ wazuh_indexer_port }}"]
+wazuh_dashboard_opensearch_hosts: [ "https://{{ wazuh_indexer_host }}:{{ wazuh_indexer_port }}" ]
 wazuh_dashboard_opensearch_ssl_verify: false
 
 # System configuration

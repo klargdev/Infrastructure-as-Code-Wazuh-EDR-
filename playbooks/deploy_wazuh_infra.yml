@@ -1,12 +1,12 @@
 ---
-- name: Deploy Wazuh EDR Full Stack
+- name: Deploy Wazuh EDR Full Stack (All-in-One)
   hosts: all
   connection: local
   become: yes
   vars_files:
     - group_vars/all.yml
   roles:
-    - { role: wazuh_indexer, when: "'wazuh_indexer' in group_names" }
-    - { role: wazuh_server, when: "'wazuh_server' in group_names" }
-    - { role: wazuh_dashboard, when: "'wazuh_dashboard' in group_names" }
-    - { role: wazuh_agents, when: "'wazuh_agents' in group_names" }
+    - wazuh_indexer
+    - wazuh_server
+    - wazuh_dashboard
+    - wazuh_agents
